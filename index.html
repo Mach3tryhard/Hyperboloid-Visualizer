@@ -45,10 +45,11 @@
             Lines: false,
             HighlightedLine: false,
             LineWidth:1,
+            WireframeWidth:1,
             Wireframe: false,
             ShowSurface: true,
             CircleWireframe:false,
-            CirclesFull:false,
+            CirclesFull:true,
             Radius:7,
             Segments:50,
             Height:20,
@@ -71,9 +72,6 @@
         fisier1.addColor(obj, 'LineColor', 255).onChange(() => {
             createCylinderLines(7, 20, 50);
         });
-        fisier1.add(obj,'LineWidth').onChange(() => {
-            createCylinderLines(7, 20, 50);
-        });
         fisier1.add(obj,'Wireframe').onChange(() => {
             createCylinderLines(7, 20, 50);
         });
@@ -84,6 +82,13 @@
             createCylinderLines(7, 20, 50);
         });
         fisier1.add(obj,'CirclesFull').onChange(() => {
+            createCylinderLines(7, 20, 50);
+        });
+
+        fisier1.add(obj,'WireframeWidth',1,3).onChange(() => {
+            createCylinderLines(7, 20, 50);
+        });
+        fisier1.add(obj,'LineWidth',1,3).onChange(() => {
             createCylinderLines(7, 20, 50);
         });
 
