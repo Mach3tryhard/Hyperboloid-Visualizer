@@ -49,11 +49,15 @@
             ShowSurface: true,
             CircleWireframe:false,
             CirclesFull:false,
-            Culoare: [255, 255, 255],
+            Radius:7,
+            Segments:50,
+            Height:20,
+            Alpha:0,
+            Phi:0,
+            LineColor: [255, 255, 255],
             x: 1,
             y: 1,
             z: 1,
-            phi:0.001,
             myFunction: function() { alert( 'hi' ) }
         };
 
@@ -62,6 +66,9 @@
             createCylinderLines(7, 20, 50);
         });
         fisier1.add(obj,'HighlightedLine').onChange(() => {
+            createCylinderLines(7, 20, 50);
+        });
+        fisier1.addColor(obj, 'LineColor', 255).onChange(() => {
             createCylinderLines(7, 20, 50);
         });
         fisier1.add(obj,'LineWidth').onChange(() => {
@@ -80,25 +87,28 @@
             createCylinderLines(7, 20, 50);
         });
 
-        gui.addColor(obj, 'Culoare', 255).onChange(() => {
+        const fisier2 = gui.addFolder('Display Modes');
+        fisier2.add(obj,'Radius',0,10).onChange(() => {
             createCylinderLines(7, 20, 50);
         });
-        gui.add(obj, 'Marime', 0, 20);
+        fisier2.add(obj,'Segments',1,100).onChange(() => {
+            createCylinderLines(7, 20, 50);
+        });
+        fisier2.add(obj,'Height',0,50).onChange(() => {
+            createCylinderLines(7, 20, 50);
+        });
+        fisier2.add(obj,'Alpha').onChange(() => {
+            createCylinderLines(7, 20, 50);
+        });
+        fisier2.add(obj,'Phi',0,2*Math.PI).onChange(() => {
+            createCylinderLines(7, 20, 50);
+        });
 
         const folder = gui.addFolder('Position');
         folder.add(obj, 'x');
         folder.add(obj, 'y');
         folder.add(obj, 'z');
 
-        const folder1 = gui.addFolder('Shading');
-        folder1.add(obj, 'Wireframe').onChange(() => {
-            createCylinderLines(7, 20, 50);
-        });
-
-        const folder2 = gui.addFolder('Object');
-        folder2.add(obj, 'phi', 0, Math.PI * 2).onChange(() => {
-            createCylinderLines(7, 20, 50);
-        });
 
         const controls = new OrbitControls(camera, renderer.domElement);
         camera.position.set(15, 15, 15);
@@ -153,7 +163,7 @@
             Circle2mesh.rotation.x =Math.PI/2;
             Circle2mesh.position.set(0, -height/2, 0); 
 
-            if(obj.CirclesFull){
+            if(obj.CirclesFull || obj.CircleWireframe){
                 scene.add( Circle1mesh );
                 scene.add( Circle2mesh );
             }
@@ -165,7 +175,7 @@
             const SolidDisplay = [];
 
             for (let i = 0; i < segments; i++) {
-                const angle2 = (i / segments) * Math.PI * 2+obj.phi;
+                const angle2 = (i / segments) * Math.PI * 2+obj.Phi;
                 const x2 = Math.cos(angle2) * radius;
                 const z2 = Math.sin(angle2) * radius;
                 SolidDisplay.push(new THREE.Vector3(x2, height / 2, z2));
@@ -185,7 +195,7 @@
                 const end = bottomCircle[i];
                 const points = [start, end];
                 const lineGeometry = new THREE.BufferGeometry().setFromPoints(points);
-                const lineMaterial = new THREE.LineBasicMaterial({ color: i === 0 && obj.HighlightedLine==true ? 0xff0000 : new THREE.Color(`rgb(${obj.Culoare[0]}, ${obj.Culoare[1]}, ${obj.Culoare[2]})`) });
+                const lineMaterial = new THREE.LineBasicMaterial({ color: i === 0 && obj.HighlightedLine==true ? 0xff0000 : new THREE.Color(`rgb(${obj.LineColor[0]}, ${obj.LineColor[1]}, ${obj.LineColor[2]})`) });
                 const line = new THREE.Line(lineGeometry, lineMaterial);
                 lines.push(line);
                 if(obj.HighlightedLine==true && i==0)
@@ -226,7 +236,7 @@
             const material = new THREE.MeshNormalMaterial({
                 wireframe: obj.Wireframe,
                 side: THREE.DoubleSide,
-                flat
+                flatshader: true,
             });
 
             currentCylinderMesh  = new THREE.Mesh(geometry, material);
