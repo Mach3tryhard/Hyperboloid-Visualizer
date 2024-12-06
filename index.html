@@ -109,7 +109,7 @@
 
         function createCylinderLines(radius, height, segments) {
             ///REMOVE OLD SHIT
-            /*if (Circle1mesh) {
+            if (Circle1mesh) {
                 Circle1mesh.geometry.dispose();
                 Circle1mesh.material.dispose();
                 scene.remove(Circle1mesh);
@@ -120,7 +120,7 @@
                 Circle2mesh.material.dispose();
                 scene.remove(Circle2mesh);
                 Circle2mesh = null;
-            }*/
+            }
 
             if (currentCylinderMesh) {
                 currentCylinderMesh.geometry.dispose();
@@ -138,14 +138,21 @@
 
             ///Generare Cerc
 
-            const geometry1 = new THREE.CircleGeometry( 5, 32 ); 
-            const geometry2 = new THREE.CircleGeometry( 5, 32 ); 
-            const material2 = new THREE.MeshNormalMaterial({
+            let geometry1 = new THREE.CircleGeometry( 7, 50 ); 
+            let geometry2 = new THREE.CircleGeometry( 7, 50 ); 
+            let material2 = new THREE.MeshNormalMaterial({
                 wireframe: obj.CircleWireframe,
                 side: THREE.DoubleSide,
             });
-            const Circle1mesh = new THREE.Mesh( geometry1, material2 );
-            const Circle2mesh = new THREE.Mesh( geometry2, material2 );
+            Circle1mesh = new THREE.Mesh( geometry1, material2 );
+            Circle2mesh = new THREE.Mesh( geometry2, material2 );
+            Circle1mesh.rotation.x =Math.PI/2;
+            Circle1mesh.rotation.z =Math.PI/2;
+            Circle1mesh.position.set(0, height/2, 0); 
+
+            Circle2mesh.rotation.x =Math.PI/2;
+            Circle2mesh.position.set(0, -height/2, 0); 
+
             if(obj.CirclesFull){
                 scene.add( Circle1mesh );
                 scene.add( Circle2mesh );
@@ -219,6 +226,7 @@
             const material = new THREE.MeshNormalMaterial({
                 wireframe: obj.Wireframe,
                 side: THREE.DoubleSide,
+                flat
             });
 
             currentCylinderMesh  = new THREE.Mesh(geometry, material);
@@ -231,7 +239,6 @@
 
         function animate() {
             renderer.render(scene, camera);
-            //requestAnimationFrame(animate); THIS FUCKED UP MY FPS
             controls.update();
         }
         renderer.setAnimationLoop(animate);
