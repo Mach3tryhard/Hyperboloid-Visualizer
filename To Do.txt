@@ -1,0 +1,25 @@
+display modes:
+Just lines
+One different colored line
+Wireframe
+Full Material
+
+Circles Wireframe
+Circles Full
+
+Object Characteristics:
+Circle Radius
+Segment Count
+Height Size
+phi angle
+alpha angle (cat % generez din perimetrul cercului)
+
+Camera:
+Autorotate left la infinit
+move position with slider
+x,y,z camera coordonates
+
+Credits:
+Function with Alert Message!
+
+Creaza documentul istoric care e prima parte din proiect
