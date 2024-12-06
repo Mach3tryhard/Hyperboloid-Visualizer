@@ -32,7 +32,7 @@
         ///SCENA
 
         const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 1000);
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 10, 1000);
         const renderer = new THREE.WebGLRenderer();
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
@@ -64,49 +64,50 @@
 
         const fisier1 = gui.addFolder('Display Modes');
         fisier1.add(obj,'Lines').onChange(() => {
-            createCylinderLines(7, 20, 50);
+            createCylinderLines(obj.Radius, obj.Height, obj.Segments);
         });
         fisier1.add(obj,'HighlightedLine').onChange(() => {
-            createCylinderLines(7, 20, 50);
-        });
-        fisier1.addColor(obj, 'LineColor', 255).onChange(() => {
-            createCylinderLines(7, 20, 50);
+            createCylinderLines(obj.Radius, obj.Height, obj.Segments);
         });
         fisier1.add(obj,'Wireframe').onChange(() => {
-            createCylinderLines(7, 20, 50);
+            createCylinderLines(obj.Radius, obj.Height, obj.Segments);
         });
         fisier1.add(obj,'ShowSurface').onChange(() => {
-            createCylinderLines(7, 20, 50);
+            createCylinderLines(obj.Radius, obj.Height, obj.Segments);
         });
         fisier1.add(obj,'CircleWireframe').onChange(() => {
-            createCylinderLines(7, 20, 50);
+            createCylinderLines(obj.Radius, obj.Height, obj.Segments);
         });
         fisier1.add(obj,'CirclesFull').onChange(() => {
-            createCylinderLines(7, 20, 50);
+            createCylinderLines(obj.Radius, obj.Height, obj.Segments);
+        });
+
+        fisier1.addColor(obj, 'LineColor', 255).onChange(() => {
+            createCylinderLines(obj.Radius, obj.Height, obj.Segments);
         });
 
         fisier1.add(obj,'WireframeWidth',1,3).onChange(() => {
-            createCylinderLines(7, 20, 50);
+            createCylinderLines(obj.Radius, obj.Height, obj.Segments);
         });
         fisier1.add(obj,'LineWidth',1,3).onChange(() => {
-            createCylinderLines(7, 20, 50);
+            createCylinderLines(obj.Radius, obj.Height, obj.Segments);
         });
 
         const fisier2 = gui.addFolder('Display Modes');
         fisier2.add(obj,'Radius',0,10).onChange(() => {
-            createCylinderLines(7, 20, 50);
+            createCylinderLines(obj.Radius, obj.Height, obj.Segments);
         });
-        fisier2.add(obj,'Segments',1,100).onChange(() => {
-            createCylinderLines(7, 20, 50);
+        fisier2.add(obj,'Segments',2,100,1).onChange(() => {
+            createCylinderLines(obj.Radius, obj.Height, obj.Segments);
         });
         fisier2.add(obj,'Height',0,50).onChange(() => {
-            createCylinderLines(7, 20, 50);
+            createCylinderLines(obj.Radius, obj.Height, obj.Segments);
         });
         fisier2.add(obj,'Alpha').onChange(() => {
-            createCylinderLines(7, 20, 50);
+            createCylinderLines(obj.Radius, obj.Height, obj.Segments);
         });
         fisier2.add(obj,'Phi',0,2*Math.PI).onChange(() => {
-            createCylinderLines(7, 20, 50);
+            createCylinderLines(obj.Radius, obj.Height, obj.Segments);
         });
 
         const folder = gui.addFolder('Position');
@@ -152,25 +153,29 @@
             }
 
             ///Generare Cerc
+            if(segments>2){
+                let geometry1 = new THREE.CircleGeometry( radius, segments ); 
+                let geometry2 = new THREE.CircleGeometry( radius, segments ); 
+                const material2 = new THREE.MeshDepthMaterial({
+                    wireframe: obj.CircleWireframe,
+                    side: THREE.DoubleSide
+                });
 
-            let geometry1 = new THREE.CircleGeometry( 7, 50 ); 
-            let geometry2 = new THREE.CircleGeometry( 7, 50 ); 
-            let material2 = new THREE.MeshNormalMaterial({
-                wireframe: obj.CircleWireframe,
-                side: THREE.DoubleSide,
-            });
-            Circle1mesh = new THREE.Mesh( geometry1, material2 );
-            Circle2mesh = new THREE.Mesh( geometry2, material2 );
-            Circle1mesh.rotation.x =Math.PI/2;
-            Circle1mesh.rotation.z =Math.PI/2;
-            Circle1mesh.position.set(0, height/2, 0); 
+                
+                Circle1mesh = new THREE.Mesh( geometry1, material2 );
+                Circle2mesh = new THREE.Mesh( geometry2, material2 );
+                Circle1mesh.rotation.x =Math.PI/2;
+                Circle1mesh.rotation.z =2*Math.PI/segments+obj.Phi;
+                Circle1mesh.position.set(0, height/2, 0); 
 
-            Circle2mesh.rotation.x =Math.PI/2;
-            Circle2mesh.position.set(0, -height/2, 0); 
+                Circle2mesh.rotation.x =Math.PI/2;
+                Circle2mesh.rotation.z =2*Math.PI/segments;
+                Circle2mesh.position.set(0, -height/2, 0); 
 
-            if(obj.CirclesFull || obj.CircleWireframe){
-                scene.add( Circle1mesh );
-                scene.add( Circle2mesh );
+                if(obj.CirclesFull || obj.CircleWireframe){
+                    scene.add( Circle1mesh );
+                    scene.add( Circle2mesh );
+                }
             }
 
             ///MAKE Points and Lines
@@ -179,23 +184,23 @@
             const bottomCircle = [];
             const SolidDisplay = [];
 
-            for (let i = 0; i < segments; i++) {
-                const angle2 = (i / segments) * Math.PI * 2+obj.Phi;
+            for (let i = 0; i < obj.Segments; i++) {
+                const angle2 = (i / obj.Segments) * Math.PI * 2+obj.Phi;
                 const x2 = Math.cos(angle2) * radius;
                 const z2 = Math.sin(angle2) * radius;
                 SolidDisplay.push(new THREE.Vector3(x2, height / 2, z2));
                 topCircle.push(new THREE.Vector3(x2, height / 2, z2));
             }
 
-            for (let i = 0; i < segments; i++) {
-                const angle1 = (i / segments) * Math.PI * 2;
+            for (let i = 0; i < obj.Segments; i++) {
+                const angle1 = (i / obj.Segments) * Math.PI * 2;
                 const x1 = Math.cos(angle1) * radius;
                 const z1 = Math.sin(angle1) * radius;
                 SolidDisplay.push(new THREE.Vector3(x1, height / 2, z1));
                 bottomCircle.push(new THREE.Vector3(x1, -height / 2, z1));
             }
 
-            for (let i = 0; i < segments; i++) {
+            for (let i = 0; i < obj.Segments; i++) {
                 const start = topCircle[i];
                 const end = bottomCircle[i];
                 const points = [start, end];
@@ -213,42 +218,55 @@
             const vertices = [];
             const indices = [];
 
-            for (let i = 0; i < segments; i++) {
-                const nextIndex = (i + 1) % segments;
+            for (let i = 0; i < obj.Segments; i++) {
+                const nextIndex = (i + 1) % obj.Segments;
 
                 const v0 = topCircle[i];
                 const v1 = bottomCircle[i]; 
                 const v2 = topCircle[nextIndex];
                 const v3 = bottomCircle[nextIndex];
 
+                // Push vertices for the quad
                 vertices.push(v0.x, v0.y, v0.z);
                 vertices.push(v1.x, v1.y, v1.z);
-                vertices.push(v2.x, v2.y, v2.z); 
+                vertices.push(v2.x, v2.y, v2.z);
                 vertices.push(v3.x, v3.y, v3.z);
 
                 const base = i * 4;
+
+                // Add indices for two triangles
                 indices.push(base, base + 2, base + 1);
                 indices.push(base + 1, base + 2, base + 3);
             }
 
-            ///Generare forma dupa puncte
+            /// Properly Dispose Old Mesh
+            if (currentCylinderMesh) {
+                currentCylinderMesh.geometry.dispose();
+                currentCylinderMesh.material.dispose();
+                scene.remove(currentCylinderMesh);
+            }
 
+            ///Generare forma dupa puncte
             const geometry = new THREE.BufferGeometry();
             geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
             geometry.setIndex(indices);
             geometry.computeVertexNormals();
 
-            const material = new THREE.MeshNormalMaterial({
+            const material = new THREE.MeshDepthMaterial({
                 wireframe: obj.Wireframe,
-                side: THREE.DoubleSide,
-                flatshader: true,
+                //side: THREE.DoubleSide,
+                //flatShading: !obj.Wireframe
             });
 
-            currentCylinderMesh  = new THREE.Mesh(geometry, material);
-            if(obj.ShowSurface==true || obj.Wireframe==true)
-                scene.add(currentCylinderMesh );
+            currentCylinderMesh = new THREE.Mesh(geometry, material);
+
+            // Add mesh to the scene if required
+            if (obj.ShowSurface || obj.Wireframe) {
+                scene.add(currentCylinderMesh);
+            }
+
         }
-        createCylinderLines(7, 20, 50);
+        createCylinderLines(obj.Radius, obj.Height, obj.Segments);
 
         ///UPDATE EVERYTHING
 
