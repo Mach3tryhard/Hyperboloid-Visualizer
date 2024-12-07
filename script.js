@@ -46,6 +46,9 @@ const obj = {
     Credits: function() { alert( 'Hyperboloid Visualiser made by Sirghe Matei-Stefan for University Algebra Course. (En)                                                                 Vizualizator de hiperboloid cu panza realizat de Sirghe Matei-Stefan pentru Cursul Universitar de Algebră. (Ro)' ) }
 };
 
+const fisier0 = gui.addFolder('Title');
+fisier0.add( document, 'title' );
+
 const fisier1 = gui.addFolder('Display Modes');
 fisier1.add(obj,'Lines').onChange(() => {
     Generate(obj.Radius, obj.Height, obj.Segments);
@@ -106,6 +109,7 @@ fisier5.add(obj,'PhiAnimate');
 
 const fisier6 = gui.addFolder('Other');
 fisier6.add(obj,'Credits');
+fisier6.close();
 
 
 const controls = new OrbitControls(camera, renderer.domElement);
