@@ -1,3 +1,4 @@
+Static project so it can be hosted on github.
 Made using:
 * [![Three][Three.js]][Three-url]
 * [![datgui][datgui.io]][datgui-url]
