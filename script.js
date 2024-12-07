@@ -31,6 +31,7 @@ const obj = {
     CircleWireframe:true,
     CirclesSurface:false,
     SurfaceColorNormal:false,
+    SurfaceVertexColor:true,
     Radius:7,
     Segments:32,
     Height:22,
@@ -73,9 +74,13 @@ const fisier2 = gui.addFolder('Display Settings');
 fisier2.add(obj,'HighlightedLine').onChange(() => {
     Generate(obj.Radius, obj.Height, obj.Segments);
 });
+fisier2.add(obj, 'SurfaceVertexColor').onChange(() => {
+    Generate(obj.Radius, obj.Height, obj.Segments);
+});
 fisier2.add(obj, 'SurfaceColorNormal').onChange(() => {
     Generate(obj.Radius, obj.Height, obj.Segments);
 });
+MeshBasicMaterial
 fisier2.addColor(obj, 'LineColor', 255).onChange(() => {
     Generate(obj.Radius, obj.Height, obj.Segments);
 });
@@ -166,9 +171,8 @@ function Generate(radius, height, segments) {
         if (line.geometry) line.geometry.dispose();
         if (line.material) line.material.dispose();
     }
-
-    ///Generare Cerc
-    if(segments>2){
+    
+    /*if(segments>2){
         let geometry1 = new THREE.CircleGeometry( radius, segments,obj.Theta,obj.Theta ); 
         let geometry2 = new THREE.CircleGeometry( radius, segments,obj.Theta,obj.Theta ); 
         let material2=null;
@@ -198,7 +202,7 @@ function Generate(radius, height, segments) {
             scene.add( Circle1mesh );
             scene.add( Circle2mesh );
         }
-    }
+    }*/
 
     ///MAKE Lines
 
@@ -287,7 +291,10 @@ function Generate(radius, height, segments) {
     ///GENERARE Puncte
     const vertices = [];
     const indices = [];
-    for (let i = 0; i < obj.Segments; i++) {
+    var kon=0;
+    if(obj.Theta!=6.283185307179586)kon=obj.Segments-1;
+    else kon=obj.Segments;
+    for (let i = 0; i < kon; i++) {
         const nextIndex = (i + 1) % obj.Segments;
         const v0 = topCircle[i];
         const v1 = bottomCircle[i]; 
@@ -342,6 +349,73 @@ function Generate(radius, height, segments) {
         scene.add(currentCylinderMesh);
     }
 
+    ///Generare Cerc
+    if (segments > 2) {
+        const topVertices = [];
+        const topIndices = [];
+        for (let i = 0; i < kon; i++) {
+            const v0 = topCircle[i];
+            const v1 = topCircle[(i + 1) % obj.Segments];
+            const vCenter = new THREE.Vector3(0, height / 2, 0);
+    
+            topVertices.push(v0.x, v0.y, v0.z);
+            topVertices.push(v1.x, v1.y, v1.z);
+            topVertices.push(vCenter.x, vCenter.y, vCenter.z);
+    
+            const base = i * 3;
+            topIndices.push(base, base + 1, base + 2);
+        }
+    
+        const topGeometry = new THREE.BufferGeometry();
+        topGeometry.setAttribute('position', new THREE.Float32BufferAttribute(topVertices, 3));
+        topGeometry.setIndex(topIndices);
+        topGeometry.computeVertexNormals();
+    
+        const material2 = obj.SurfaceColorNormal
+            ? new THREE.MeshNormalMaterial({
+                  wireframe: obj.CircleWireframe,
+                  side: THREE.DoubleSide,
+              })
+            : new THREE.MeshDepthMaterial({
+                  wireframe: obj.CircleWireframe,
+                  side: THREE.DoubleSide,
+              });
+    
+        Circle1mesh = new THREE.Mesh(topGeometry, material2);
+        //Circle1mesh.rotation.x = Math.PI / 2;
+        //Circle1mesh.rotation.y = segments/Math.PI;
+        Circle1mesh.position.set(0, 0, 0);
+    
+        const bottomVertices = [];
+        const bottomIndices = [];
+        for (let i = 0; i < kon; i++) {
+            const v0 = bottomCircle[i];
+            const v1 = bottomCircle[(i + 1) % obj.Segments];
+            const vCenter = new THREE.Vector3(0, -height / 2, 0);
+    
+            bottomVertices.push(v0.x, v0.y, v0.z);
+            bottomVertices.push(v1.x, v1.y, v1.z);
+            bottomVertices.push(vCenter.x, vCenter.y, vCenter.z);
+    
+            const base = i * 3;
+            bottomIndices.push(base, base + 1, base + 2);
+        }
+    
+        const bottomGeometry = new THREE.BufferGeometry();
+        bottomGeometry.setAttribute('position', new THREE.Float32BufferAttribute(bottomVertices, 3));
+        bottomGeometry.setIndex(bottomIndices);
+        bottomGeometry.computeVertexNormals();
+    
+        Circle2mesh = new THREE.Mesh(bottomGeometry, material2);
+        //Circle2mesh.rotation.x = Math.PI / 2;
+        //Circle2mesh.rotation.z = obj.Phi;
+        Circle2mesh.position.set(0, 0, 0);
+    
+        if (obj.CirclesSurface || obj.CircleWireframe) {
+            scene.add(Circle1mesh);
+            scene.add(Circle2mesh);
+        }
+    }
 }
 
 Generate(obj.Radius, obj.Height, obj.Segments);
