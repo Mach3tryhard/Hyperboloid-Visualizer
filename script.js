@@ -19,7 +19,7 @@ const axesHelper = new THREE.AxesHelper( 1000 );
 ///SCENA
 
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 8, 1000);
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 1000);
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
@@ -41,9 +41,9 @@ const obj = {
     Surface: false,
     CircleLines:false,
     CircleWireframe:true,
-    CirclesSurface:false,
+    CircleSurface:false,
     SurfaceColorNormal:false,
-    SurfaceVertexColor:false,
+    SurfaceLighting:false,
     AxisShow:true,
     ShowPoints:false,
     Radius:7,
@@ -81,7 +81,7 @@ fisier1.add(obj,'CircleLines').onChange(() => {
 fisier1.add(obj,'CircleWireframe').onChange(() => {
     Generate(obj.Radius, obj.Height, obj.Segments);
 });
-fisier1.add(obj,'CirclesSurface').onChange(() => {
+fisier1.add(obj,'CircleSurface').onChange(() => {
     Generate(obj.Radius, obj.Height, obj.Segments);
 });
 
@@ -95,7 +95,7 @@ fisier2.add(obj,'HighlightedLineShow').onChange(() => {
 fisier2.add(obj,'ShowPoints').onChange(() => {
     Generate(obj.Radius, obj.Height, obj.Segments);
 });
-fisier2.add(obj, 'SurfaceVertexColor').onChange(() => {
+fisier2.add(obj, 'SurfaceLighting').onChange(() => {
     Generate(obj.Radius, obj.Height, obj.Segments);
 });
 fisier2.add(obj, 'SurfaceColorNormal').onChange(() => {
@@ -137,8 +137,6 @@ fisier5.add(obj,'PhiAnimate');
 
 const fisier6 = gui.addFolder('Other');
 fisier6.add(obj,'Credits');
-fisier6.close();
-
 
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.update();
@@ -187,7 +185,9 @@ function Generate(radius, height, segments) {
 
     if (currentCylinderMesh) {
         currentCylinderMesh.geometry.dispose();
-        currentCylinderMesh.material.dispose();
+        if (currentCylinderMesh.material && currentCylinderMesh.material.dispose) {
+            currentCylinderMesh.material.dispose();
+        }
         scene.remove(currentCylinderMesh);
         currentCylinderMesh = null;
     }
@@ -255,7 +255,7 @@ function Generate(radius, height, segments) {
         const lineMaterial = new THREE.LineBasicMaterial({
             color: i === 0 && obj.HighlightedLineShow === true
                 ? isCloseToWhite 
-                    ? new THREE.Color('rgb(255, 0,0)')
+                    ? new THREE.Color('rgb(255, 0,255)')
                     : new THREE.Color(`rgb(${255 - obj.LineColor[0]}, ${255 - obj.LineColor[1]}, ${255 - obj.LineColor[2]})`)
                 : new THREE.Color(`rgb(${obj.LineColor[0]}, ${obj.LineColor[1]}, ${obj.LineColor[2]})`)
         });
@@ -331,11 +331,11 @@ function Generate(radius, height, segments) {
     }
 
     /// STERGE CHESTIILE VECHI
-    if (currentCylinderMesh) {
+    /*if (currentCylinderMesh) {
         currentCylinderMesh.geometry.dispose();
         currentCylinderMesh.material.dispose();
         scene.remove(currentCylinderMesh);
-    }
+    }*/
 
     ////ARATARE PUNCTE DACA SE VREA
     if(obj.ShowPoints==true){
@@ -371,16 +371,72 @@ function Generate(radius, height, segments) {
     geometry.setIndex(indices);
     geometry.computeVertexNormals();
 
-
     let material=null;
     if(obj.SurfaceColorNormal==false){
-        material = new THREE.MeshDepthMaterial({
-            wireframe: obj.Wireframe,
-            side: THREE.DoubleSide,
-            //flatShading: !obj.Wireframe
-        });
+        if(obj.Surface==true){
+            material = new THREE.ShaderMaterial({
+                uniforms: {
+                    surfaceColor: { value: new THREE.Color(obj.SurfaceColor[0]/255, obj.SurfaceColor[1]/255, obj.SurfaceColor[2]/255) },
+                },
+                vertexShader: `
+                    varying float vDepth;
+                    varying vec3 vNormal;
+                    varying vec3 vPosition;
+            
+                    void main() {
+                        // Pass vertex position for custom lighting calculations
+                        vPosition = (modelViewMatrix * vec4(position, 1.0)).xyz;
+            
+                        // Calculate the normal for flat shading
+                        vNormal = normalize(normalMatrix * normal);
+            
+                        // Calculate depth value
+                        vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+                        vDepth = -mvPosition.z;
+            
+                        // Set vertex position
+                        gl_Position = projectionMatrix * mvPosition;
+                    }
+                `,
+                fragmentShader: `
+                    varying float vDepth;
+                    varying vec3 vNormal;
+                    varying vec3 vPosition;
+            
+                    uniform vec3 surfaceColor; // Surface color passed as a uniform
+            
+                    void main() {
+                        // Normalize depth value
+                        float depth = vDepth / 500.0; // Scale by a fixed divisor (adjust as needed)
+                        depth = clamp(depth, 0.0, 1.0); // Clamp depth values to 0-1 range
+                        depth = pow(depth, 0.3); // Apply gamma correction for visibility
+            
+                        // Apply flat shading and custom lighting calculation
+                        vec3 normal = normalize(vNormal);
+            
+                        // Adjust lighting axis to consider the Y-axis (e.g., for objects with a vertical alignment)
+                        float lightingZ = abs(dot(normal, vec3(0.0, 0.0, 1.0))); // Original Z-axis lighting
+                        float lightingY = abs(dot(normal, vec3(0.0, 1.0, 0.0))); // Add Y-axis lighting
+                        float combinedLighting = max(lightingZ, lightingY); // Combine Z and Y lighting
+            
+                        // Combine depth, lighting, and surface color for shading effect
+                        vec3 color = surfaceColor * (depth * combinedLighting); // Modulate surface color by depth and lighting
+                        gl_FragColor = vec4(color, 1.0); // Output color
+                    }
+                `,
+                side: THREE.DoubleSide,
+                transparent: false,
+            });
+        }
+        if(obj.Wireframe==true){
+            material = new THREE.MeshBasicMaterial({
+                color:0x808080,
+                wireframe: obj.Wireframe,
+                side: THREE.DoubleSide,
+            });
+        }
     }
-    if(obj.SurfaceVertexColor==true){
+    if(obj.SurfaceLighting==true){
         material = new THREE.MeshStandardMaterial({
             vertexColors:false,
             color:new THREE.Color(`rgb(${obj.SurfaceColor[0]}, ${obj.SurfaceColor[1]}, ${obj.SurfaceColor[2]})`),
@@ -426,13 +482,60 @@ function Generate(radius, height, segments) {
     
         let material2=null;
         if(obj.SurfaceColorNormal==false){
-            material2 = new THREE.MeshDepthMaterial({
-                wireframe: obj.CircleWireframe,
+            material2 = new THREE.ShaderMaterial({
+                uniforms: {
+                    surfaceColor: { value: new THREE.Color(obj.SurfaceColor[0]/255, obj.SurfaceColor[1]/255, obj.SurfaceColor[2]/255) },
+                },
+                vertexShader: `
+                    varying float vDepth;
+                    varying vec3 vNormal;
+            
+                    void main() {
+                        // Calculate the normal for flat shading
+                        vNormal = normalize(normalMatrix * normal);
+            
+                        // Calculate depth value
+                        vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+                        vDepth = -mvPosition.z;
+            
+                        // Set vertex position
+                        gl_Position = projectionMatrix * mvPosition;
+                    }
+                `,
+                fragmentShader: `
+                    varying float vDepth;
+                    varying vec3 vNormal;
+            
+                    uniform vec3 surfaceColor; // Surface color passed as a uniform
+            
+                    void main() {
+                        // Normalize depth value
+                        float depth = vDepth / 500.0; // Scale by a fixed divisor (adjust as needed)
+                        depth = clamp(depth, 0.0, 1.0); // Clamp depth values to 0-1 range
+                        depth = pow(depth, 0.3); // Apply gamma correction for visibility
+            
+                        // Apply flat shading with bidirectional lighting
+                        vec3 normal = normalize(vNormal);
+                        float lighting = abs(dot(normal, vec3(0.0, 0.0, 1.0))); // Handle both upward and downward-facing normals
+                        lighting = clamp(lighting, 0.2, 1.0); // Ensure a minimum lighting value to prevent complete darkness
+            
+                        // Combine depth, lighting, and surface color for shading effect
+                        vec3 color = surfaceColor * (depth * lighting); // Modulate surface color by depth and lighting
+                        gl_FragColor = vec4(color, 1.0); // Output color
+                    }
+                `,
                 side: THREE.DoubleSide,
-                //flatShading: !obj.Wireframe
+                transparent: false,
             });
+            if(obj.CircleWireframe==true){
+                material2 = new THREE.MeshBasicMaterial({
+                    color:0x808080,
+                    wireframe: obj.CircleWireframe,
+                    side: THREE.DoubleSide,
+                });
+            }
         }
-        if(obj.SurfaceVertexColor==true){
+        if(obj.SurfaceLighting==true){
             material2 = new THREE.MeshStandardMaterial({
                 color:new THREE.Color(`rgb(${obj.SurfaceColor[0]}, ${obj.SurfaceColor[1]}, ${obj.SurfaceColor[2]})`),
                 wireframe: obj.CircleWireframe,
@@ -445,12 +548,12 @@ function Generate(radius, height, segments) {
             material2 = new THREE.MeshNormalMaterial({
                 wireframe: obj.CircleWireframe,
                 side: THREE.DoubleSide,
-                //flatShading: !obj.Wireframe
             });
         }
     
         Circle1mesh = new THREE.Mesh(topGeometry, material2);
-        //Circle1mesh.rotation.x = Math.PI / 2;
+        //Circle1mesh.rotation.x = Math.PI;
+        //Circle1mesh.rotation.z=Math.Pi+obj.Phi;
         //Circle1mesh.rotation.y = segments/Math.PI;
         Circle1mesh.position.set(0, 0, 0);
     
@@ -475,11 +578,11 @@ function Generate(radius, height, segments) {
         bottomGeometry.computeVertexNormals();
     
         Circle2mesh = new THREE.Mesh(bottomGeometry, material2);
-        //Circle2mesh.rotation.x = Math.PI / 2;
+        //Circle2mesh.rotation.x = Math.PI;
         //Circle2mesh.rotation.z = obj.Phi;
         Circle2mesh.position.set(0, 0, 0);
     
-        if (obj.CirclesSurface || obj.CircleWireframe) {
+        if (obj.CircleSurface || obj.CircleWireframe) {
             scene.add(Circle1mesh);
             scene.add(Circle2mesh);
         }
