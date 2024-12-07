@@ -475,6 +475,7 @@ function Generate(radius, height, segments) {
     
         let material2=null;
         if(obj.SurfaceColorNormal==false){
+            
             ///Shader pentru suprafata clasica la cerc
             material2 = new THREE.ShaderMaterial({
                 uniforms: {
