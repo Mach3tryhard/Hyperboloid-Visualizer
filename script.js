@@ -23,9 +23,9 @@ document.body.appendChild(renderer.domElement);
 
 const gui = new GUI();
 const obj = { 
-    Lines: true,
-    HighlightedLine: true,
-    Wireframe: false,
+    Lines: false,
+    HighlightedLine: false,
+    Wireframe: true,
     Surface: false,
     CircleLines:false,
     CircleWireframe:true,
@@ -287,45 +287,27 @@ function Generate(radius, height, segments) {
     ///GENERARE Puncte
     const vertices = [];
     const indices = [];
-    const stepTheta = obj.Theta / obj.Segments; // Step size based on Theta
-
     for (let i = 0; i < obj.Segments; i++) {
-        const currentAngle = i * stepTheta + obj.Phi;
-        const nextAngle = (i + 1) * stepTheta + obj.Phi;
-
-        // Calculate vertex positions
-        const v0 = new THREE.Vector3(
-            Math.cos(currentAngle) * radius,
-            height / 2,
-            Math.sin(currentAngle) * radius
-        );
-        const v1 = new THREE.Vector3(
-            Math.cos(currentAngle) * radius,
-            -height / 2,
-            Math.sin(currentAngle) * radius
-        );
-        const v2 = new THREE.Vector3(
-            Math.cos(nextAngle) * radius,
-            height / 2,
-            Math.sin(nextAngle) * radius
-        );
-        const v3 = new THREE.Vector3(
-            Math.cos(nextAngle) * radius,
-            -height / 2,
-            Math.sin(nextAngle) * radius
-        );
-
+        const nextIndex = (i + 1) % obj.Segments;
+        const v0 = topCircle[i];
+        const v1 = bottomCircle[i]; 
+        const v2 = topCircle[nextIndex];
+        const v3 = bottomCircle[nextIndex];
         // Push vertices for the quad
         vertices.push(v0.x, v0.y, v0.z);
         vertices.push(v1.x, v1.y, v1.z);
         vertices.push(v2.x, v2.y, v2.z);
         vertices.push(v3.x, v3.y, v3.z);
-
         const base = i * 4;
-
-        // Create two triangles for the quad
+        // Faci 2 triunghiuri
         indices.push(base, base + 2, base + 1);
         indices.push(base + 1, base + 2, base + 3);
+    }
+    /// STERGE CHESTIILE VECHI
+    if (currentCylinderMesh) {
+        currentCylinderMesh.geometry.dispose();
+        currentCylinderMesh.material.dispose();
+        scene.remove(currentCylinderMesh);
     }
 
     /// STERGE CHESTIILE VECHI
