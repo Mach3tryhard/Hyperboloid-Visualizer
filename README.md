@@ -1,8 +1,11 @@
+### Hyperboloid Visualizer
+![Screenshot 2024-12-08 010641](https://github.com/user-attachments/assets/fc328f13-0c3a-49b1-aeca-67748eb3c15d)
 Static project so it can be hosted on github.
 Made using:
 * [![Three][Three.js]][Three-url]
 * [![datgui][datgui.io]][datgui-url]
 * [![stats][stats.dev]][stats-url]
+
 
 
 <!-- MARKDOWN LINKS & IMAGES -->
