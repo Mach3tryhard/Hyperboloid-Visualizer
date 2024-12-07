@@ -17,7 +17,6 @@ let Circle2mesh = null;
 const axesHelper = new THREE.AxesHelper( 1000 );
 
 ///SCENA
-
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 1000);
 const renderer = new THREE.WebGLRenderer();
@@ -32,7 +31,6 @@ directionalLight.position.set(10, 10, 10).normalize();
 scene.add(directionalLight);
 
 ///GUI
-
 const gui = new GUI();
 const obj = { 
     Lines: false,
@@ -223,7 +221,7 @@ function Generate(radius, height, segments) {
         scene.remove(axesHelper);
     }
 
-    ///MAKE Lines
+    ///MAKE LINE OBJECTS
 
     const topCircle = [];
     const bottomCircle = [];
@@ -330,18 +328,12 @@ function Generate(radius, height, segments) {
         indices.push(base + 1, base + 2, base + 3);
     }
 
-    /// STERGE CHESTIILE VECHI
-    /*if (currentCylinderMesh) {
-        currentCylinderMesh.geometry.dispose();
-        currentCylinderMesh.material.dispose();
-        scene.remove(currentCylinderMesh);
-    }*/
-
     ////ARATARE PUNCTE DACA SE VREA
     if(obj.ShowPoints==true){
         const pointGeometry = new THREE.BufferGeometry();
         pointGeometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
 
+        ///SHADER COSTUM PENTRU PUNCTE CA SA FIE MAI EFICIENT
         const pointMaterial = new THREE.ShaderMaterial({
             vertexShader: `
                 varying float vSize;
@@ -365,7 +357,7 @@ function Generate(radius, height, segments) {
         scene.add(pointMesh);
     }
 
-    ///Generare forma dupa puncte
+    ///Generare Suprafata dupa forma
     const geometry = new THREE.BufferGeometry();
     geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
     geometry.setIndex(indices);
@@ -374,6 +366,7 @@ function Generate(radius, height, segments) {
     let material=null;
     if(obj.SurfaceColorNormal==false){
         if(obj.Surface==true){
+            ///Shader pentru suprafata clasica
             material = new THREE.ShaderMaterial({
                 uniforms: {
                     surfaceColor: { value: new THREE.Color(obj.SurfaceColor[0]/255, obj.SurfaceColor[1]/255, obj.SurfaceColor[2]/255) },
@@ -458,7 +451,7 @@ function Generate(radius, height, segments) {
         scene.add(currentCylinderMesh);
     }
 
-    ///Generare Cerc
+    ///Generare Cerc dupa forma
     if (segments > 2) {
         const topVertices = [];
         const topIndices = [];
@@ -482,6 +475,7 @@ function Generate(radius, height, segments) {
     
         let material2=null;
         if(obj.SurfaceColorNormal==false){
+            ///Shader pentru suprafata clasica la cerc
             material2 = new THREE.ShaderMaterial({
                 uniforms: {
                     surfaceColor: { value: new THREE.Color(obj.SurfaceColor[0]/255, obj.SurfaceColor[1]/255, obj.SurfaceColor[2]/255) },
@@ -550,7 +544,8 @@ function Generate(radius, height, segments) {
                 side: THREE.DoubleSide,
             });
         }
-    
+
+        ///Offseturi la cercuri
         Circle1mesh = new THREE.Mesh(topGeometry, material2);
         //Circle1mesh.rotation.x = Math.PI;
         //Circle1mesh.rotation.z=Math.Pi+obj.Phi;
@@ -610,7 +605,7 @@ function animate() {
         obj.Phi+=0.01;
         if(obj.Phi>2*Math.PI)obj.Phi=0;
         Generate(obj.Radius, obj.Height, obj.Segments);
-        phiController.setValue(obj.Phi);  // Update the controller value
+        phiController.setValue(obj.Phi);
         phiController.updateDisplay();
     }
 }
