@@ -206,27 +206,11 @@ function Generate(radius, height, segments) {
         if (line.material) line.material.dispose();
     }
 
-    /*while (pointSpheres.length > 0) {
-        const line = pointSpheres.pop();
-        scene.remove(line);
-        if (line.geometry) line.geometry.dispose();
-        if (line.material) line.material.dispose();
-    }*/
     if (pointMesh) {
-        // Remove the previous Points object from the scene
         scene.remove(pointMesh);
-    
-        // Dispose of geometry and material
         pointMesh.geometry.dispose();
         pointMesh.material.dispose();
-    
-        // Set reference to null to avoid memory leaks
         pointMesh = null;
-    }
-    if(instancedMesh!=null){
-        instancedMesh.geometry.dispose();
-        instancedMesh.material.dispose();
-        scene.remove(instancedMesh);
     }
 
     ///MAKE AXIS
@@ -354,69 +338,32 @@ function Generate(radius, height, segments) {
     }
 
     ////ARATARE PUNCTE DACA SE VREA
-
-    // Create a BufferGeometry with the positions of your points
-    const pointGeometry = new THREE.BufferGeometry();
-    pointGeometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
-
-    // Create a ShaderMaterial to simulate spheres
-    const pointMaterial = new THREE.ShaderMaterial({
-        vertexShader: `
-            varying float vSize;
-            void main() {
-                vSize = 10.0; // Control size of points
-                gl_PointSize = vSize;
-                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-            }
-        `,
-        fragmentShader: `
-            void main() {
-                vec2 uv = gl_PointCoord * 2.0 - 1.0;
-                if (dot(uv, uv) > 1.0) discard; // Create circular points
-                gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); // Color of points
-            }
-        `,
-        transparent: false,
-    });
-
-    // Create a Points object and add it to the scene
-    pointMesh = new THREE.Points(pointGeometry, pointMaterial);
-    scene.add(pointMesh);
-
-    /*const numPoints = vertices.length / 3;
-    sphereGeometry = new THREE.SphereGeometry(0.1, 16, 16);
-    sphereMaterial = new THREE.MeshStandardMaterial({ color: 0xff0000 });
-
-    instancedMesh = new THREE.InstancedMesh(sphereGeometry, sphereMaterial, numPoints);
     if(obj.ShowPoints==true){
-        scene.add(instancedMesh);
+        const pointGeometry = new THREE.BufferGeometry();
+        pointGeometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+
+        const pointMaterial = new THREE.ShaderMaterial({
+            vertexShader: `
+                varying float vSize;
+                void main() {
+                    vSize = 10.0; // Control size of points
+                    gl_PointSize = vSize;
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                }
+            `,
+            fragmentShader: `
+                void main() {
+                    vec2 uv = gl_PointCoord * 2.0 - 1.0;
+                    if (dot(uv, uv) > 1.0) discard; // Create circular points
+                    gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); // Color of points
+                }
+            `,
+            transparent: false,
+        });
+
+        pointMesh = new THREE.Points(pointGeometry, pointMaterial);
+        scene.add(pointMesh);
     }
-    const tempMatrix = new THREE.Matrix4();
-    for (let i = 0; i < numPoints; i++) {
-        const x = vertices[i * 3];
-        const y = vertices[i * 3 + 1];
-        const z = vertices[i * 3 + 2];
-        tempMatrix.makeTranslation(x, y, z);
-        instancedMesh.setMatrixAt(i, tempMatrix);
-    }
-    instancedMesh.instanceMatrix.needsUpdate = true;*/
-
-    /*const pointMaterial = new THREE.MeshStandardMaterial({ color: 0xff0000 });
-
-    for (let i = 0; i < vertices.length; i += 3) {
-        const x = vertices[i];
-        const y = vertices[i + 1];
-        const z = vertices[i + 2];
-
-        const sphereGeometry = new THREE.SphereGeometry(0.1, 16, 16); 
-        const sphere = new THREE.Mesh(sphereGeometry, pointMaterial);
-
-        sphere.position.set(x, y, z);
-
-        scene.add(sphere);
-
-        pointSpheres.push(sphere);
-    }*/
 
     ///Generare forma dupa puncte
     const geometry = new THREE.BufferGeometry();
