@@ -34,7 +34,7 @@ scene.add(directionalLight);
 const gui = new GUI();
 const obj = { 
     Lines: false,
-    HighlightedLineShow: false,
+    HighlightedLine: false,
     Wireframe: true,
     Surface: false,
     CircleLines:false,
@@ -44,6 +44,8 @@ const obj = {
     SurfaceLighting:false,
     AxisShow:true,
     ShowPoints:false,
+    Alpha:1,
+    Beta:1,
     Radius:7,
     Segments:32,
     Height:22,
@@ -87,7 +89,7 @@ const fisier2 = gui.addFolder('Display Settings');
 fisier2.add(obj,'AxisShow').onChange(() => {
     Generate(obj.Radius, obj.Height, obj.Segments);
 });
-fisier2.add(obj,'HighlightedLineShow').onChange(() => {
+fisier2.add(obj,'HighlightedLine').onChange(() => {
     Generate(obj.Radius, obj.Height, obj.Segments);
 });
 fisier2.add(obj,'ShowPoints').onChange(() => {
@@ -120,6 +122,12 @@ fisier3.add(obj,'Theta',0,2*Math.PI).onChange(() => {
     Generate(obj.Radius, obj.Height, obj.Segments);
 });
 const phiController = fisier3.add(obj,'Phi',0,2*Math.PI).onChange(() => {
+    Generate(obj.Radius, obj.Height, obj.Segments);
+});
+fisier3.add(obj,'Alpha',0,5).onChange(() => {
+    Generate(obj.Radius, obj.Height, obj.Segments);
+});
+fisier3.add(obj,'Beta',0,5).onChange(() => {
     Generate(obj.Radius, obj.Height, obj.Segments);
 });
 
@@ -229,16 +237,16 @@ function Generate(radius, height, segments) {
 
     for (let i = 0; i < obj.Segments; i++) {
         const angle2 = (i / obj.Segments) * obj.Theta +obj.Phi;
-        const x2 = Math.cos(angle2) * radius;
-        const z2 = Math.sin(angle2) * radius;
+        const x2 = obj.Alpha * Math.cos(angle2) * radius;
+        const z2 = obj.Beta * Math.sin(angle2) * radius;
         SolidDisplay.push(new THREE.Vector3(x2, height / 2, z2));
         topCircle.push(new THREE.Vector3(x2, height / 2, z2));
     }
 
     for (let i = 0; i < obj.Segments; i++) {
         const angle1 = (i / obj.Segments) * obj.Theta;
-        const x1 = Math.cos(angle1) * radius;
-        const z1 = Math.sin(angle1) * radius;
+        let x1 =  Math.cos(angle1) * radius;
+        let z1 = Math.sin(angle1) * radius;
         SolidDisplay.push(new THREE.Vector3(x1, height / 2, z1));
         bottomCircle.push(new THREE.Vector3(x1, -height / 2, z1));
     }
@@ -251,7 +259,7 @@ function Generate(radius, height, segments) {
 
         const isCloseToWhite = obj.LineColor[0] > 180 && obj.LineColor[1] > 180 && obj.LineColor[2] > 180;
         const lineMaterial = new THREE.LineBasicMaterial({
-            color: i === 0 && obj.HighlightedLineShow === true
+            color: i === 0 && obj.HighlightedLine === true
                 ? isCloseToWhite 
                     ? new THREE.Color('rgb(255, 0,255)')
                     : new THREE.Color(`rgb(${255 - obj.LineColor[0]}, ${255 - obj.LineColor[1]}, ${255 - obj.LineColor[2]})`)
@@ -260,7 +268,7 @@ function Generate(radius, height, segments) {
 
         const line = new THREE.Line(lineGeometry, lineMaterial);
         lines.push(line);
-        if(obj.HighlightedLineShow==true && i==0)
+        if(obj.HighlightedLine==true && i==0)
             scene.add(line);
         if(obj.Lines==true)
             scene.add(line);
