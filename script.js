@@ -7,6 +7,8 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 let lines = [];
 let Circlelines = [];
 let pointSpheres = [];
+let middleCircleLines = [];
+let perpendicularLine=null;
 
 let pointMesh = null; 
 let instancedMesh=null;
@@ -33,17 +35,19 @@ scene.add(directionalLight);
 ///GUI
 const gui = new GUI();
 const obj = { 
-    Lines: false,
-    HighlightedLine: false,
-    Wireframe: true,
+    Lines: true,
+    HighlightedLine: true,
+    Wireframe: false,
     Surface: false,
-    CircleLines:false,
-    CircleWireframe:true,
+    CircleLines:true,
+    CircleWireframe:false,
     CircleSurface:false,
     SurfaceColorNormal:false,
     SurfaceLighting:false,
+    MiddleCircle:true,
     AxisShow:true,
     ShowPoints:false,
+    RotationPointer:true,
     Alpha:1,
     Beta:1,
     Radius:7,
@@ -64,6 +68,7 @@ const obj = {
 
 const fisier0 = gui.addFolder('Title');
 fisier0.add( document, 'title' );
+fisier0.close();
 
 const fisier1 = gui.addFolder('Display Modes');
 fisier1.add(obj,'Lines').onChange(() => {
@@ -90,6 +95,12 @@ fisier2.add(obj,'AxisShow').onChange(() => {
     Generate(obj.Radius, obj.Height, obj.Segments);
 });
 fisier2.add(obj,'HighlightedLine').onChange(() => {
+    Generate(obj.Radius, obj.Height, obj.Segments);
+});
+fisier2.add(obj,'MiddleCircle').onChange(() => {
+    Generate(obj.Radius, obj.Height, obj.Segments);
+});
+fisier2.add(obj,'RotationPointer').onChange(() => {
     Generate(obj.Radius, obj.Height, obj.Segments);
 });
 fisier2.add(obj,'ShowPoints').onChange(() => {
@@ -143,6 +154,7 @@ fisier5.add(obj,'PhiAnimate');
 
 const fisier6 = gui.addFolder('Other');
 fisier6.add(obj,'Credits');
+fisier6.close();
 
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.update();
@@ -212,6 +224,20 @@ function Generate(radius, height, segments) {
         if (line.material) line.material.dispose();
     }
 
+    while (middleCircleLines.length > 0) {
+        const line = middleCircleLines.pop();
+        scene.remove(line);
+        if (line.geometry) line.geometry.dispose();
+        if (line.material) line.material.dispose();
+    }
+
+    if(perpendicularLine!=null){
+        scene.remove(perpendicularLine);
+        perpendicularLine.geometry.dispose();
+        perpendicularLine.material.dispose();
+        perpendicularLine=null;
+    }
+
     if (pointMesh) {
         scene.remove(pointMesh);
         pointMesh.geometry.dispose();
@@ -251,6 +277,8 @@ function Generate(radius, height, segments) {
         bottomCircle.push(new THREE.Vector3(x1, -height / 2, z1));
     }
 
+    
+
     for (let i = 0; i < obj.Segments; i++) {
         const start = topCircle[i];
         const end = bottomCircle[i];
@@ -258,6 +286,7 @@ function Generate(radius, height, segments) {
         const lineGeometry = new THREE.BufferGeometry().setFromPoints(points);
 
         const isCloseToWhite = obj.LineColor[0] > 180 && obj.LineColor[1] > 180 && obj.LineColor[2] > 180;
+
         const lineMaterial = new THREE.LineBasicMaterial({
             color: i === 0 && obj.HighlightedLine === true
                 ? isCloseToWhite 
@@ -590,6 +619,74 @@ function Generate(radius, height, segments) {
             scene.add(Circle1mesh);
             scene.add(Circle2mesh);
         }
+
+        const middleRadius = radius * Math.cos(obj.Phi/2);
+
+        ///CERCUL DIN MIJLOC GENERARE
+        const middleCircle = [];
+        for (let i = 0; i < segments; i++) {
+            const angle = (i / segments) * obj.Theta;
+            const x = middleRadius * Math.cos(angle);
+            const z = middleRadius * Math.sin(angle);
+            middleCircle.push(new THREE.Vector3(x, 0, z));
+        }
+
+        for (let i = 0; i < segments; i++) {
+            const start = middleCircle[i];
+            const end = middleCircle[(i + 1) % segments];
+            const points = [start, end];
+            const lineGeometry = new THREE.BufferGeometry().setFromPoints(points);
+
+            const isCloseToWhite = obj.LineColor[0] > 180 && obj.LineColor[1] > 180 && obj.LineColor[2] > 180;
+
+            const lineMaterial = new THREE.LineBasicMaterial({
+                color: obj.MiddleCircle === true
+                    ? isCloseToWhite 
+                        ? new THREE.Color('rgb(255, 0,255)')
+                        : new THREE.Color(`rgb(${255 - obj.LineColor[0]}, ${255 - obj.LineColor[1]}, ${255 - obj.LineColor[2]})`)
+                    : new THREE.Color(`rgb(${obj.LineColor[0]}, ${obj.LineColor[1]}, ${obj.LineColor[2]})`)
+            });
+
+            const line = new THREE.Line(lineGeometry, lineMaterial);
+            if(obj.MiddleCircle==true){
+                middleCircleLines.push(line); 
+                scene.add(line);
+            }
+        }
+
+        //LINE THAT SHOWS TOP CIRCLE ROTATING
+        const phiAngle = obj.Phi;
+        const lineRadius = radius;
+        const rotationAngle = phiAngle;
+
+        const angle = rotationAngle;
+        const x = lineRadius * Math.cos(angle);
+        const y = height / 2;
+        const z = lineRadius * Math.sin(angle);
+
+        const start = new THREE.Vector3(x, y, z);
+
+        const tangentDirection = new THREE.Vector3(-Math.sin(angle), 0, Math.cos(angle));
+        const outwardDirection = new THREE.Vector3(tangentDirection.z, 0, -tangentDirection.x);
+
+        const lineLength = 5;
+        const end = start.clone().add(outwardDirection.multiplyScalar(lineLength));
+
+        const lineGeometry = new THREE.BufferGeometry().setFromPoints([start, end]);
+
+        const isCloseToWhite = obj.LineColor[0] > 180 && obj.LineColor[1] > 180 && obj.LineColor[2] > 180;
+
+        const lineMaterial = new THREE.LineBasicMaterial({
+            color: obj.RotationPointer === true
+                ? isCloseToWhite 
+                    ? new THREE.Color('rgb(255, 0,255)')
+                    : new THREE.Color(`rgb(${255 - obj.LineColor[0]}, ${255 - obj.LineColor[1]}, ${255 - obj.LineColor[2]})`)
+                : new THREE.Color(`rgb(${obj.LineColor[0]}, ${obj.LineColor[1]}, ${obj.LineColor[2]})`)
+        });
+
+        perpendicularLine = new THREE.Line(lineGeometry, lineMaterial);
+        if(obj.RotationPointer)
+            scene.add(perpendicularLine);
     }
 }
 
