@@ -1,27 +1,5 @@
-display modes:
-Just lines
-One different colored line
-Wireframe
-Full Material
-
-Circles Wireframe
-Circles Full
-
-Object Characteristics:
-Circle Radius
-Segment Count
-Height Size
-phi angle
-alpha angle (cat % generez din perimetrul cercului)
-
-Camera:
-Autorotate left la infinit
-move position with slider
-x,y,z camera coordonates
-
-Credits:
-Function with Alert Message!
-
-Creaza documentul istoric care e prima parte din proiect
-
-highlighted line sa fie inverted color hex
+fix alpha angle not working with middle circle
+add elipsa de jos
+adauga punctele P si Q care reprezinta THETA
+trage perpendicularele pe raza cercului
+trage o linie care ar face tot timpul un cilindru
