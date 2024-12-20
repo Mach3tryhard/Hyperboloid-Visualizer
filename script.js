@@ -6,6 +6,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 ///VECTOR
 let lines = [];
 let Circlelines = [];
+let Ellipselines = [];
 let pointSpheres = [];
 let middleCircleLines = [];
 let perpendicularLine=null;
@@ -16,7 +17,7 @@ let instancedMesh=null;
 let currentCylinderMesh = null;
 let Circle1mesh = null;
 let Circle2mesh = null;
-const axesHelper = new THREE.AxesHelper( 1000 );
+const axesHelper = new THREE.AxesHelper( 30 );
 
 ///SCENA
 const scene = new THREE.Scene();
@@ -44,10 +45,11 @@ const obj = {
     CircleSurface:false,
     SurfaceColorNormal:false,
     SurfaceLighting:false,
-    MiddleCircle:true,
+    MiddleCircle:false,
     AxisShow:true,
     ShowPoints:false,
-    RotationPointer:true,
+    RotationPointer:false,
+    EllipseProjection2D:true,
     Alpha:1,
     Beta:1,
     Radius:7,
@@ -58,17 +60,13 @@ const obj = {
     SurfaceColor: [150, 150, 150],
     LineColor: [255, 255, 255],
     CameraAngle:0,
-    x: 15,
-    y: 15,
-    z: 15,
+    x: 12,
+    y: 12,
+    z: 20,
     CameraAnimate:false,
     PhiAnimate:true,
     Credits: function() { alert( 'Hyperboloid Visualiser made by Sirghe Matei-Stefan for University Algebra and Geometry Course. (En)                                                                 Vizualizator de hiperboloid cu panza realizat de Sirghe Matei-Stefan pentru Cursul Universitar de Algebră si Geometrie. (Ro)' ) }
 };
-
-const fisier0 = gui.addFolder('Title');
-fisier0.add( document, 'title' );
-fisier0.close();
 
 const fisier1 = gui.addFolder('Display Modes');
 fisier1.add(obj,'Lines').onChange(() => {
@@ -92,6 +90,9 @@ fisier1.add(obj,'CircleSurface').onChange(() => {
 
 const fisier2 = gui.addFolder('Display Settings');
 fisier2.add(obj,'AxisShow').onChange(() => {
+    Generate(obj.Radius, obj.Height, obj.Segments);
+});
+fisier2.add(obj,'EllipseProjection2D').onChange(() => {
     Generate(obj.Radius, obj.Height, obj.Segments);
 });
 fisier2.add(obj,'HighlightedLine').onChange(() => {
@@ -152,7 +153,7 @@ const fisier5 = gui.addFolder('Animations');
 fisier5.add(obj,'CameraAnimate');
 fisier5.add(obj,'PhiAnimate');
 
-const fisier6 = gui.addFolder('Other');
+const fisier6 = gui.addFolder('Credits');
 fisier6.add(obj,'Credits');
 fisier6.close();
 
@@ -217,6 +218,13 @@ function Generate(radius, height, segments) {
         if (line.material) line.material.dispose();
     }
 
+    while(Ellipselines.length>0){
+        const line = Ellipselines.pop();
+        scene.remove(line);
+        if (line.geometry) line.geometry.dispose();
+        if (line.material) line.material.dispose();
+    }
+
     while (lines.length > 0) {
         const line = lines.pop();
         scene.remove(line);
@@ -248,6 +256,7 @@ function Generate(radius, height, segments) {
     ///MAKE AXIS
 
     if(obj.AxisShow==true){
+        axesHelper.position.set(0, -obj.Height/2-0.05, 0); 
         scene.add( axesHelper );
     }
     else{
@@ -271,13 +280,11 @@ function Generate(radius, height, segments) {
 
     for (let i = 0; i < obj.Segments; i++) {
         const angle1 = (i / obj.Segments) * obj.Theta;
-        let x1 =  Math.cos(angle1) * radius;
-        let z1 = Math.sin(angle1) * radius;
+        let x1 = obj.Alpha * Math.cos(angle1) * radius;
+        let z1 = obj.Beta * Math.sin(angle1) * radius;
         SolidDisplay.push(new THREE.Vector3(x1, height / 2, z1));
         bottomCircle.push(new THREE.Vector3(x1, -height / 2, z1));
     }
-
-    
 
     for (let i = 0; i < obj.Segments; i++) {
         const start = topCircle[i];
@@ -687,6 +694,113 @@ function Generate(radius, height, segments) {
         perpendicularLine = new THREE.Line(lineGeometry, lineMaterial);
         if(obj.RotationPointer)
             scene.add(perpendicularLine);
+
+        /// GENERAREA ELIPSEI PE CARE O DOREA PROFA
+        if(obj.EllipseProjection2D==true){
+            const bottomCircle1 = [];
+
+            for (let i = 0; i < obj.Segments; i++) {
+                const angle1 = (i / obj.Segments)*2*Math.PI;
+                let x1 = obj.Alpha * Math.cos(angle1) * radius*3/2;
+                let z1 = obj.Beta * Math.sin(angle1) * radius;
+                bottomCircle1.push(new THREE.Vector3(x1, -height / 2, z1));
+            }
+
+            for (let i = 0; i < segments; i++) {
+                const start = bottomCircle1[i];
+                const end = bottomCircle1[(i + 1) % segments];
+        
+                const points = [start, end];
+                const lineGeometry = new THREE.BufferGeometry().setFromPoints(points);
+        
+                const lineMaterial = new THREE.LineBasicMaterial({
+                    color: new THREE.Color(`rgb(${obj.LineColor[0]}, ${obj.LineColor[1]}, ${obj.LineColor[2]})`)
+                });
+        
+                const line = new THREE.Line(lineGeometry, lineMaterial);
+                Ellipselines.push(line);
+                scene.add(line);
+            }
+
+            ///CRUCEA DE LA ELIPSA
+            const centerY = -height / 2;
+            const majorRadius = radius * 3 / 2;
+            const minorRadius = radius;
+
+            const majorAxisPoints = [
+                new THREE.Vector3(-majorRadius * obj.Alpha, centerY, 0),
+                new THREE.Vector3(majorRadius * obj.Alpha, centerY, 0)
+            ];
+            const majorAxisGeometry = new THREE.BufferGeometry().setFromPoints(majorAxisPoints);
+            const majorAxisMaterial = new THREE.LineBasicMaterial({
+                color: new THREE.Color(`rgb(${obj.LineColor[0]}, ${obj.LineColor[1]}, ${obj.LineColor[2]})`),
+                linewidth: 2
+            });
+            const majorAxisLine = new THREE.Line(majorAxisGeometry, majorAxisMaterial);
+            Ellipselines.push(majorAxisLine);
+            scene.add(majorAxisLine);
+
+            const minorAxisPoints = [
+                new THREE.Vector3(0, centerY, -minorRadius * obj.Beta),
+                new THREE.Vector3(0, centerY, minorRadius * obj.Beta)
+            ];
+            const minorAxisGeometry = new THREE.BufferGeometry().setFromPoints(minorAxisPoints);
+            const minorAxisMaterial = new THREE.LineBasicMaterial({
+                color: new THREE.Color(`rgb(${obj.LineColor[0]}, ${obj.LineColor[1]}, ${obj.LineColor[2]})`),
+                linewidth: 2
+            });
+            const minorAxisLine = new THREE.Line(minorAxisGeometry, minorAxisMaterial);
+            Ellipselines.push(minorAxisLine);
+            scene.add(minorAxisLine);
+
+            /// PERPENDICULARA LA PLANUL ELIPSEI
+            const start = topCircle[0];
+            const end = new THREE.Vector3(start.x, start.y - obj.Height, start.z);
+            const points = [start, end];
+            const lineGeometry = new THREE.BufferGeometry().setFromPoints(points);
+
+            const isCloseToWhite = obj.LineColor[0] > 180 && obj.LineColor[1] > 180 && obj.LineColor[2] > 180;
+
+            const lineMaterial = new THREE.LineBasicMaterial({
+                color: obj.EllipseProjection2D === true
+                ? isCloseToWhite 
+                    ? new THREE.Color('rgb(255, 0,255)')
+                    : new THREE.Color(`rgb(${255 - obj.LineColor[0]}, ${255 - obj.LineColor[1]}, ${255 - obj.LineColor[2]})`)
+                : new THREE.Color(`rgb(${obj.LineColor[0]}, ${obj.LineColor[1]}, ${obj.LineColor[2]})`)
+            });
+
+            const line = new THREE.Line(lineGeometry, lineMaterial);
+            Ellipselines.push(line);
+            scene.add(line);
+
+            /// LINIA PERPENDICULARA CU AXA Z
+            let intersectionZ = start.z;
+
+            let ZAxisIntersection = new THREE.Vector3(
+                0,
+                -obj.Height/2,
+                intersectionZ
+            );
+            let scalar=1;
+            if(start.x>=0) scalar=1;
+            else scalar=-1;
+            let newLinePoints = [new THREE.Vector3(start.x + scalar * obj.Alpha * radius * 1/2 * Math.abs(Math.cos(obj.Phi)), -obj.Height/2, start.z), ZAxisIntersection];
+            let newLineGeometry = new THREE.BufferGeometry().setFromPoints(newLinePoints);
+
+            let newLineMaterial = new THREE.LineBasicMaterial({
+                color: obj.EllipseProjection2D === true
+                ? isCloseToWhite 
+                    ? new THREE.Color('rgb(255, 0,255)')
+                    : new THREE.Color(`rgb(${255 - obj.LineColor[0]}, ${255 - obj.LineColor[1]}, ${255 - obj.LineColor[2]})`)
+                : new THREE.Color(`rgb(${obj.LineColor[0]}, ${obj.LineColor[1]}, ${obj.LineColor[2]})`)
+            });
+
+            const newLine = new THREE.Line(newLineGeometry, newLineMaterial);
+            Ellipselines.push(newLine);
+            scene.add(newLine);
+
+        }
+        
     }
 }
 

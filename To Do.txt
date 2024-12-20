@@ -1,5 +1,4 @@
-fix alpha angle not working with middle circle
-add elipsa de jos
-adauga punctele P si Q care reprezinta THETA
-trage perpendicularele pe raza cercului
-trage o linie care ar face tot timpul un cilindru
+fix theta angle not working with middle circle
+adauga punctele P si Q care reprezinta PHI
+Fa axele sa fie mai misto (distanta si con la final plus coordinate care sa arate directia)
+EFICIENTA (se genereaza puncte de mai multe ori probabil) (material copy pasted in loc sa fie salvat)
