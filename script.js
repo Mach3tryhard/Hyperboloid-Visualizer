@@ -13,11 +13,14 @@ let perpendicularLine=null;
 
 let pointMesh = null; 
 let instancedMesh=null;
+let cones = [];
 
 let currentCylinderMesh = null;
 let Circle1mesh = null;
 let Circle2mesh = null;
-const axesHelper = new THREE.AxesHelper( 30 );
+const AXESlength = 25;
+
+const axesHelper = new THREE.AxesHelper( AXESlength );
 
 ///SCENA
 const scene = new THREE.Scene();
@@ -45,7 +48,7 @@ const obj = {
     CircleSurface:false,
     SurfaceColorNormal:false,
     SurfaceLighting:false,
-    MiddleCircle:true,
+    MiddleCircle:false,
     AxisShow:true,
     ShowPoints:false,
     RotationPointer:false,
@@ -61,8 +64,8 @@ const obj = {
     LineColor: [255, 255, 255],
     CameraAngle:0,
     x: 12,
-    y: 12,
-    z: 20,
+    y: 16,
+    z: 16,
     CameraAnimate:false,
     PhiAnimate:true,
     Credits: function() { alert( 'Hyperboloid Visualiser made by Sirghe Matei-Stefan for University Algebra and Geometry Course. (En)                                                                 Vizualizator de hiperboloid cu panza realizat de Sirghe Matei-Stefan pentru Cursul Universitar de Algebră si Geometrie. (Ro)' ) }
@@ -72,16 +75,16 @@ const fisier1 = gui.addFolder('Display Modes');
 fisier1.add(obj,'Lines').onChange(() => {
     Generate(obj.Radius, obj.Height, obj.Segments);
 });
-fisier1.add(obj,'Wireframe').onChange(() => {
-    Generate(obj.Radius, obj.Height, obj.Segments);
-});
-fisier1.add(obj,'Surface').onChange(() => {
-    Generate(obj.Radius, obj.Height, obj.Segments);
-});
 fisier1.add(obj,'CircleLines').onChange(() => {
     Generate(obj.Radius, obj.Height, obj.Segments);
 });
+fisier1.add(obj,'Wireframe').onChange(() => {
+    Generate(obj.Radius, obj.Height, obj.Segments);
+});
 fisier1.add(obj,'CircleWireframe').onChange(() => {
+    Generate(obj.Radius, obj.Height, obj.Segments);
+});
+fisier1.add(obj,'Surface').onChange(() => {
     Generate(obj.Radius, obj.Height, obj.Segments);
 });
 fisier1.add(obj,'CircleSurface').onChange(() => {
@@ -217,6 +220,13 @@ function Generate(radius, height, segments) {
         if (line.geometry) line.geometry.dispose();
         if (line.material) line.material.dispose();
     }
+    
+    while(cones.length>0){
+        const line = cones.pop();
+        scene.remove(line);
+        if (line.geometry) line.geometry.dispose();
+        if (line.material) line.material.dispose();
+    }
 
     while(Ellipselines.length>0){
         const line = Ellipselines.pop();
@@ -258,6 +268,28 @@ function Generate(radius, height, segments) {
     if(obj.AxisShow==true){
         axesHelper.position.set(0, -obj.Height/2-0.05, 0); 
         scene.add( axesHelper );
+        ///AXES VECTOR POINTERS
+        const geometry = new THREE.ConeGeometry( 0.2, 1 , 6 ); 
+        const material1 = new THREE.MeshBasicMaterial( {color: 0xbfff00} );
+        const cone1 = new THREE.Mesh(geometry, material1 ); 
+        cones.push(cone1);
+        scene.add( cone1 );
+        cone1.position.set(0,AXESlength/2+1.5,0);
+        
+        const material2 = new THREE.MeshBasicMaterial( {color: 0xffa500} );
+        const cone2 = new THREE.Mesh(geometry, material2 ); 
+        cones.push(cone2);
+        scene.add( cone2 );
+        cone2.position.set(AXESlength,-obj.Height/2,0);
+        cone2.rotation.set(0, 0, -Math.PI / 2);
+
+        const material3 = new THREE.MeshBasicMaterial( {color: 0x87CEEB} );
+        const cone3 = new THREE.Mesh(geometry, material3 ); 
+        cones.push(cone3);
+        scene.add( cone3 );
+        cone3.position.set(0,-obj.Height/2,AXESlength);
+        cone3.rotation.set(Math.PI / 2, 0, 0);
+
     }
     else{
         axesHelper.dispose();
@@ -627,20 +659,20 @@ function Generate(radius, height, segments) {
             scene.add(Circle2mesh);
         }
 
+        ///CERCUL DIN MIJLOC GENERARE
         const middleRadius = radius * Math.cos(obj.Phi/2);
 
-        ///CERCUL DIN MIJLOC GENERARE
         const middleCircle = [];
-        for (let i = 0; i < segments; i++) {
-            const angle = (i / segments) * obj.Theta;
-            const x = middleRadius * Math.cos(angle);
-            const z = middleRadius * Math.sin(angle);
+        for (let i = 0; i < obj.Segments; i++) {
+            const angle = (i /  obj.Segments) * obj.Theta+obj.Phi;
+            const x = middleRadius * Math.cos(angle) * obj.Alpha;
+            const z = middleRadius * Math.sin(angle) * obj.Beta;
             middleCircle.push(new THREE.Vector3(x, 0, z));
         }
 
-        for (let i = 0; i < segments; i++) {
+        for (let i = 0; i <  obj.Segments; i++) {
             const start = middleCircle[i];
-            const end = middleCircle[(i + 1) % segments];
+            const end = middleCircle[(i + 1) %  obj.Segments];
             const points = [start, end];
             const lineGeometry = new THREE.BufferGeometry().setFromPoints(points);
 
@@ -811,7 +843,12 @@ function Generate(radius, height, segments) {
 
             /// ADAUGARE TOATE PUNCTELE IMPORTANTE
             const geometry = new THREE.SphereGeometry( 0.2, 10, 10 ); 
-            const material = new THREE.MeshBasicMaterial( { color: 0xff00ff } ); 
+            const material = new THREE.MeshBasicMaterial( { 
+                color: obj.EllipseProjection2D === true
+                ? isCloseToWhite 
+                    ? new THREE.Color('rgb(255, 0,255)')
+                    : new THREE.Color(`rgb(${255 - obj.LineColor[0]}, ${255 - obj.LineColor[1]}, ${255 - obj.LineColor[2]})`)
+                : new THREE.Color(`rgb(${obj.LineColor[0]}, ${obj.LineColor[1]}, ${obj.LineColor[2]})`) } ); 
             const sphere = new THREE.Mesh( geometry, material ); 
             scene.add( sphere );
             Ellipselines.push(sphere);
