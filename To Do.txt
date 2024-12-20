@@ -1,4 +1,4 @@
 fix theta angle not working with middle circle
-adauga punctele P si Q care reprezinta PHI
 Fa axele sa fie mai misto (distanta si con la final plus coordinate care sa arate directia)
+ADD POINT NAMES TO STUFF
 EFICIENTA (se genereaza puncte de mai multe ori probabil) (material copy pasted in loc sa fie salvat)

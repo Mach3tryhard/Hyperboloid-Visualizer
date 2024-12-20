@@ -45,7 +45,7 @@ const obj = {
     CircleSurface:false,
     SurfaceColorNormal:false,
     SurfaceLighting:false,
-    MiddleCircle:false,
+    MiddleCircle:true,
     AxisShow:true,
     ShowPoints:false,
     RotationPointer:false,
@@ -697,8 +697,18 @@ function Generate(radius, height, segments) {
 
         /// GENERAREA ELIPSEI PE CARE O DOREA PROFA
         if(obj.EllipseProjection2D==true){
-            const bottomCircle1 = [];
+            const isCloseToWhite = obj.LineColor[0] > 180 && obj.LineColor[1] > 180 && obj.LineColor[2] > 180;
 
+            const lineMaterial = new THREE.LineBasicMaterial({
+                color: obj.EllipseProjection2D === true
+                ? isCloseToWhite 
+                    ? new THREE.Color('rgb(255, 0,255)')
+                    : new THREE.Color(`rgb(${255 - obj.LineColor[0]}, ${255 - obj.LineColor[1]}, ${255 - obj.LineColor[2]})`)
+                : new THREE.Color(`rgb(${obj.LineColor[0]}, ${obj.LineColor[1]}, ${obj.LineColor[2]})`)
+            });
+
+            const bottomCircle1 = [];
+            ///ELIPSA
             for (let i = 0; i < obj.Segments; i++) {
                 const angle1 = (i / obj.Segments)*2*Math.PI;
                 let x1 = obj.Alpha * Math.cos(angle1) * radius*3/2;
@@ -722,23 +732,33 @@ function Generate(radius, height, segments) {
                 scene.add(line);
             }
 
-            ///CRUCEA DE LA ELIPSA
+            ///CRUCEA DE LA ELIPSA SI OQ
             const centerY = -height / 2;
             const majorRadius = radius * 3 / 2;
             const minorRadius = radius;
 
-            const majorAxisPoints = [
+            const majorAxisPoints1 = [
                 new THREE.Vector3(-majorRadius * obj.Alpha, centerY, 0),
+                new THREE.Vector3(0, centerY, 0)
+            ];
+            const majorAxisPoints2 = [
+                new THREE.Vector3(0, centerY, 0),
                 new THREE.Vector3(majorRadius * obj.Alpha, centerY, 0)
             ];
-            const majorAxisGeometry = new THREE.BufferGeometry().setFromPoints(majorAxisPoints);
-            const majorAxisMaterial = new THREE.LineBasicMaterial({
+            const majorAxisGeometry1 = new THREE.BufferGeometry().setFromPoints(majorAxisPoints1);
+            const majorAxisMaterial1 = new THREE.LineBasicMaterial({
                 color: new THREE.Color(`rgb(${obj.LineColor[0]}, ${obj.LineColor[1]}, ${obj.LineColor[2]})`),
                 linewidth: 2
             });
-            const majorAxisLine = new THREE.Line(majorAxisGeometry, majorAxisMaterial);
-            Ellipselines.push(majorAxisLine);
-            scene.add(majorAxisLine);
+            const majorAxisLine1 = new THREE.Line(majorAxisGeometry1, majorAxisMaterial1);
+            Ellipselines.push(majorAxisLine1);
+            scene.add(majorAxisLine1);
+
+            const majorAxisGeometry2 = new THREE.BufferGeometry().setFromPoints(majorAxisPoints2);
+
+            const majorAxisLine2 = new THREE.Line(majorAxisGeometry2, lineMaterial);
+            Ellipselines.push(majorAxisLine2);
+            scene.add(majorAxisLine2);
 
             const minorAxisPoints = [
                 new THREE.Vector3(0, centerY, -minorRadius * obj.Beta),
@@ -759,16 +779,6 @@ function Generate(radius, height, segments) {
             const points = [start, end];
             const lineGeometry = new THREE.BufferGeometry().setFromPoints(points);
 
-            const isCloseToWhite = obj.LineColor[0] > 180 && obj.LineColor[1] > 180 && obj.LineColor[2] > 180;
-
-            const lineMaterial = new THREE.LineBasicMaterial({
-                color: obj.EllipseProjection2D === true
-                ? isCloseToWhite 
-                    ? new THREE.Color('rgb(255, 0,255)')
-                    : new THREE.Color(`rgb(${255 - obj.LineColor[0]}, ${255 - obj.LineColor[1]}, ${255 - obj.LineColor[2]})`)
-                : new THREE.Color(`rgb(${obj.LineColor[0]}, ${obj.LineColor[1]}, ${obj.LineColor[2]})`)
-            });
-
             const line = new THREE.Line(lineGeometry, lineMaterial);
             Ellipselines.push(line);
             scene.add(line);
@@ -787,18 +797,57 @@ function Generate(radius, height, segments) {
             let newLinePoints = [new THREE.Vector3(start.x + scalar * obj.Alpha * radius * 1/2 * Math.abs(Math.cos(obj.Phi)), -obj.Height/2, start.z), ZAxisIntersection];
             let newLineGeometry = new THREE.BufferGeometry().setFromPoints(newLinePoints);
 
-            let newLineMaterial = new THREE.LineBasicMaterial({
-                color: obj.EllipseProjection2D === true
-                ? isCloseToWhite 
-                    ? new THREE.Color('rgb(255, 0,255)')
-                    : new THREE.Color(`rgb(${255 - obj.LineColor[0]}, ${255 - obj.LineColor[1]}, ${255 - obj.LineColor[2]})`)
-                : new THREE.Color(`rgb(${obj.LineColor[0]}, ${obj.LineColor[1]}, ${obj.LineColor[2]})`)
-            });
-
-            const newLine = new THREE.Line(newLineGeometry, newLineMaterial);
+            const newLine = new THREE.Line(newLineGeometry, lineMaterial);
             Ellipselines.push(newLine);
             scene.add(newLine);
 
+            /// LINIE SPRE CENTRU DE LA PUNCTUL P
+            newLinePoints = [new THREE.Vector3(start.x + scalar * obj.Alpha * radius * 1/2 * Math.abs(Math.cos(obj.Phi)), -obj.Height/2, start.z), new THREE.Vector3(0,-obj.Height/2,0)];
+            newLineGeometry = new THREE.BufferGeometry().setFromPoints(newLinePoints);
+
+            const newLine1 = new THREE.Line(newLineGeometry, lineMaterial);
+            Ellipselines.push(newLine1);
+            scene.add(newLine1);
+
+            /// ADAUGARE TOATE PUNCTELE IMPORTANTE
+            const geometry = new THREE.SphereGeometry( 0.2, 10, 10 ); 
+            const material = new THREE.MeshBasicMaterial( { color: 0xff00ff } ); 
+            const sphere = new THREE.Mesh( geometry, material ); 
+            scene.add( sphere );
+            Ellipselines.push(sphere);
+            const PPointPos =new THREE.Vector3(start.x + scalar * obj.Alpha * radius * 1/2 * Math.abs(Math.cos(obj.Phi)), -obj.Height/2, start.z);
+            sphere.position.set(PPointPos.x, PPointPos.y, PPointPos.z);
+
+            const sphere1 = new THREE.Mesh( geometry, material );
+            scene.add( sphere1 );
+            Ellipselines.push(sphere1);
+            sphere1.position.set(obj.Radius*3/2*obj.Alpha, -obj.Height/2, 0);
+
+            const sphere2 = new THREE.Mesh( geometry, material );
+            scene.add( sphere2 );
+            Ellipselines.push(sphere2);
+            sphere2.position.set(0, -obj.Height/2, 0);
+
+            const sphere3 = new THREE.Mesh( geometry, material );
+            scene.add( sphere3 );
+            Ellipselines.push(sphere3);
+            sphere3.position.set(0, obj.Height/2, 0);
+
+            const sphere4 = new THREE.Mesh( geometry, material );
+            scene.add( sphere4 );
+            Ellipselines.push(sphere4);
+            sphere4.position.set(radius*Math.cos(obj.Phi)*obj.Alpha, obj.Height/2, radius*Math.sin(obj.Phi)*obj.Beta);
+
+            const sphere5 = new THREE.Mesh( geometry, material );
+            scene.add( sphere5 );
+            Ellipselines.push(sphere5);
+            sphere5.position.set(radius*obj.Alpha, -obj.Height/2, 0);
+
+            const sphere6 = new THREE.Mesh( geometry, material );
+            scene.add( sphere6 );
+            Ellipselines.push(sphere6);
+            const DPointPos = new THREE.Vector3(start.x, start.y - obj.Height, start.z);
+            sphere6.position.set(DPointPos.x, -obj.Height/2, DPointPos.z);
         }
         
     }
