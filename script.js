@@ -453,17 +453,13 @@ function Generate(radius, height, segments) {
                     varying vec3 vPosition;
             
                     void main() {
-                        // Pass vertex position for custom lighting calculations
                         vPosition = (modelViewMatrix * vec4(position, 1.0)).xyz;
             
-                        // Calculate the normal for flat shading
                         vNormal = normalize(normalMatrix * normal);
             
-                        // Calculate depth value
                         vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
                         vDepth = -mvPosition.z;
             
-                        // Set vertex position
                         gl_Position = projectionMatrix * mvPosition;
                     }
                 `,
@@ -472,25 +468,21 @@ function Generate(radius, height, segments) {
                     varying vec3 vNormal;
                     varying vec3 vPosition;
             
-                    uniform vec3 surfaceColor; // Surface color passed as a uniform
+                    uniform vec3 surfaceColor;
             
                     void main() {
-                        // Normalize depth value
-                        float depth = vDepth / 500.0; // Scale by a fixed divisor (adjust as needed)
-                        depth = clamp(depth, 0.0, 1.0); // Clamp depth values to 0-1 range
-                        depth = pow(depth, 0.3); // Apply gamma correction for visibility
+                        float depth = vDepth / 500.0;
+                        depth = clamp(depth, 0.0, 1.0);
+                        depth = pow(depth, 0.3);
             
-                        // Apply flat shading and custom lighting calculation
                         vec3 normal = normalize(vNormal);
             
-                        // Adjust lighting axis to consider the Y-axis (e.g., for objects with a vertical alignment)
-                        float lightingZ = abs(dot(normal, vec3(0.0, 0.0, 1.0))); // Original Z-axis lighting
-                        float lightingY = abs(dot(normal, vec3(0.0, 1.0, 0.0))); // Add Y-axis lighting
-                        float combinedLighting = max(lightingZ, lightingY); // Combine Z and Y lighting
+                        float lightingZ = abs(dot(normal, vec3(0.0, 0.0, 1.0)));
+                        float lightingY = abs(dot(normal, vec3(0.0, 1.0, 0.0)));
+                        float combinedLighting = max(lightingZ, lightingY);
             
-                        // Combine depth, lighting, and surface color for shading effect
-                        vec3 color = surfaceColor * (depth * combinedLighting); // Modulate surface color by depth and lighting
-                        gl_FragColor = vec4(color, 1.0); // Output color
+                        vec3 color = surfaceColor * (depth * combinedLighting);
+                        gl_FragColor = vec4(color, 1.0);
                     }
                 `,
                 side: THREE.DoubleSide,
@@ -562,14 +554,11 @@ function Generate(radius, height, segments) {
                     varying vec3 vNormal;
             
                     void main() {
-                        // Calculate the normal for flat shading
                         vNormal = normalize(normalMatrix * normal);
             
-                        // Calculate depth value
                         vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
                         vDepth = -mvPosition.z;
-            
-                        // Set vertex position
+
                         gl_Position = projectionMatrix * mvPosition;
                     }
                 `,
@@ -577,22 +566,19 @@ function Generate(radius, height, segments) {
                     varying float vDepth;
                     varying vec3 vNormal;
             
-                    uniform vec3 surfaceColor; // Surface color passed as a uniform
+                    uniform vec3 surfaceColor;
             
                     void main() {
-                        // Normalize depth value
-                        float depth = vDepth / 500.0; // Scale by a fixed divisor (adjust as needed)
-                        depth = clamp(depth, 0.0, 1.0); // Clamp depth values to 0-1 range
-                        depth = pow(depth, 0.3); // Apply gamma correction for visibility
+                        float depth = vDepth / 500.0;
+                        depth = clamp(depth, 0.0, 1.0);
+                        depth = pow(depth, 0.3);
             
-                        // Apply flat shading with bidirectional lighting
                         vec3 normal = normalize(vNormal);
-                        float lighting = abs(dot(normal, vec3(0.0, 0.0, 1.0))); // Handle both upward and downward-facing normals
-                        lighting = clamp(lighting, 0.2, 1.0); // Ensure a minimum lighting value to prevent complete darkness
+                        float lighting = abs(dot(normal, vec3(0.0, 0.0, 1.0)));
+                        lighting = clamp(lighting, 0.2, 1.0);
             
-                        // Combine depth, lighting, and surface color for shading effect
-                        vec3 color = surfaceColor * (depth * lighting); // Modulate surface color by depth and lighting
-                        gl_FragColor = vec4(color, 1.0); // Output color
+                        vec3 color = surfaceColor * (depth * lighting);
+                        gl_FragColor = vec4(color, 1.0);
                     }
                 `,
                 side: THREE.DoubleSide,
@@ -865,10 +851,10 @@ function Generate(radius, height, segments) {
             Ellipselines.push(sphere2);
             sphere2.position.set(0, -obj.Height/2, 0);
 
-            const sphere3 = new THREE.Mesh( geometry, material );
-            scene.add( sphere3 );
-            Ellipselines.push(sphere3);
-            sphere3.position.set(0, obj.Height/2, 0);
+            //const sphere3 = new THREE.Mesh( geometry, material );
+            //scene.add( sphere3 );
+            //Ellipselines.push(sphere3);
+            //sphere3.position.set(0, obj.Height/2, 0);
 
             const sphere4 = new THREE.Mesh( geometry, material );
             scene.add( sphere4 );
