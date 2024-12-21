@@ -414,7 +414,7 @@ function Generate(radius, height, segments) {
             vertexShader: `
                 varying float vSize;
                 void main() {
-                    vSize = 10.0; // Control size of points
+                    vSize = 10.0;
                     gl_PointSize = vSize;
                     gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
                 }
@@ -422,8 +422,8 @@ function Generate(radius, height, segments) {
             fragmentShader: `
                 void main() {
                     vec2 uv = gl_PointCoord * 2.0 - 1.0;
-                    if (dot(uv, uv) > 1.0) discard; // Create circular points
-                    gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); // Color of points
+                    if (dot(uv, uv) > 1.0) discard;
+                    gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
                 }
             `,
             transparent: false,
