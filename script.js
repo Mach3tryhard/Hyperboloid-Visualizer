@@ -646,19 +646,27 @@ function Generate(radius, height, segments) {
         }
 
         ///CERCUL DIN MIJLOC GENERARE
-        const middleRadius = radius * Math.cos(obj.Phi/2);
 
+        const middleRadius = radius * Math.cos(obj.Phi / 2);
         const middleCircle = [];
+        const middlePhi = obj.Phi / 2; // Half of the top circle's rotation
+
         for (let i = 0; i < obj.Segments; i++) {
-            const angle = (i /  obj.Segments) * obj.Theta+obj.Phi;
+            const angle = (i / obj.Segments) * obj.Theta;
             const x = middleRadius * Math.cos(angle) * obj.Alpha;
             const z = middleRadius * Math.sin(angle) * obj.Beta;
-            middleCircle.push(new THREE.Vector3(x, 0, z));
+            const y = 0; // Assuming the middle circle lies in the XZ plane
+
+            // Rotate the point around the Y-axis by middlePhi angle
+            const rotatedX = x * Math.cos(middlePhi) - z * Math.sin(middlePhi);
+            const rotatedZ = x * Math.sin(middlePhi) + z * Math.cos(middlePhi);
+
+            middleCircle.push(new THREE.Vector3(rotatedX, y, rotatedZ));
         }
 
-        for (let i = 0; i <  obj.Segments; i++) {
+        for (let i = 0; i < obj.Segments; i++) {
             const start = middleCircle[i];
-            const end = middleCircle[(i + 1) %  obj.Segments];
+            const end = middleCircle[(i + 1) % obj.Segments];
             const points = [start, end];
             const lineGeometry = new THREE.BufferGeometry().setFromPoints(points);
 
@@ -673,7 +681,7 @@ function Generate(radius, height, segments) {
             });
 
             const line = new THREE.Line(lineGeometry, lineMaterial);
-            if(obj.MiddleCircle==true){
+            if (obj.MiddleCircle == true) {
                 middleCircleLines.push(line); 
                 scene.add(line);
             }
