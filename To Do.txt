@@ -1,2 +1,1 @@
-ADD POINT NAMES TO STUFF
-EFICIENTA (se genereaza puncte de mai multe ori probabil) (material copy pasted in loc sa fie salvat)
+Optimizari maybe

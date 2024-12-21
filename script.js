@@ -7,18 +7,18 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 let lines = [];
 let Circlelines = [];
 let Ellipselines = [];
-let pointSpheres = [];
+let ProjectionPoint = [];
 let middleCircleLines = [];
-let perpendicularLine=null;
-
-let pointMesh = null; 
-let instancedMesh=null;
+let Letters = [];
 let cones = [];
 
+let perpendicularLine=null;
+let pointMesh = null; 
 let currentCylinderMesh = null;
 let Circle1mesh = null;
 let Circle2mesh = null;
 const AXESlength = 25;
+let label;
 
 const axesHelper = new THREE.AxesHelper( AXESlength );
 
@@ -53,6 +53,7 @@ const obj = {
     ShowPoints:false,
     RotationPointer:false,
     EllipseProjection2D:true,
+    NamePoints:true,
     Alpha:1,
     Beta:1,
     Radius:7,
@@ -99,6 +100,9 @@ fisier2.add(obj,'EllipseProjection2D').onChange(() => {
     Generate(obj.Radius, obj.Height, obj.Segments);
 });
 fisier2.add(obj,'HighlightedLine').onChange(() => {
+    Generate(obj.Radius, obj.Height, obj.Segments);
+});
+fisier2.add(obj,'NamePoints').onChange(() => {
     Generate(obj.Radius, obj.Height, obj.Segments);
 });
 fisier2.add(obj,'MiddleCircle').onChange(() => {
@@ -244,6 +248,13 @@ function Generate(radius, height, segments) {
 
     while (middleCircleLines.length > 0) {
         const line = middleCircleLines.pop();
+        scene.remove(line);
+        if (line.geometry) line.geometry.dispose();
+        if (line.material) line.material.dispose();
+    }
+
+    while (ProjectionPoint.length > 0) {
+        const line = ProjectionPoint.pop();
         scene.remove(line);
         if (line.geometry) line.geometry.dispose();
         if (line.material) line.material.dispose();
@@ -845,42 +856,36 @@ function Generate(radius, height, segments) {
                 : new THREE.Color(`rgb(${obj.LineColor[0]}, ${obj.LineColor[1]}, ${obj.LineColor[2]})`) } ); 
             const sphere = new THREE.Mesh( geometry, material ); 
             scene.add( sphere );
-            Ellipselines.push(sphere);
+            ProjectionPoint.push(sphere);
             const PPointPos =new THREE.Vector3(start.x + scalar * obj.Alpha * radius * 1/2 * Math.abs(Math.cos(obj.Phi)), -obj.Height/2, start.z);
             sphere.position.set(PPointPos.x, PPointPos.y, PPointPos.z);
 
             const sphere1 = new THREE.Mesh( geometry, material );
             scene.add( sphere1 );
-            Ellipselines.push(sphere1);
+            ProjectionPoint.push(sphere1);
             sphere1.position.set(obj.Radius*3/2*obj.Alpha, -obj.Height/2, 0);
 
             const sphere2 = new THREE.Mesh( geometry, material );
             scene.add( sphere2 );
-            Ellipselines.push(sphere2);
+            ProjectionPoint.push(sphere2);
             sphere2.position.set(0, -obj.Height/2, 0);
-
-            //const sphere3 = new THREE.Mesh( geometry, material );
-            //scene.add( sphere3 );
-            //Ellipselines.push(sphere3);
-            //sphere3.position.set(0, obj.Height/2, 0);
 
             const sphere4 = new THREE.Mesh( geometry, material );
             scene.add( sphere4 );
-            Ellipselines.push(sphere4);
+            ProjectionPoint.push(sphere4);
             sphere4.position.set(radius*Math.cos(obj.Phi)*obj.Alpha, obj.Height/2, radius*Math.sin(obj.Phi)*obj.Beta);
 
             const sphere5 = new THREE.Mesh( geometry, material );
             scene.add( sphere5 );
-            Ellipselines.push(sphere5);
+            ProjectionPoint.push(sphere5);
             sphere5.position.set(radius*obj.Alpha, -obj.Height/2, 0);
 
             const sphere6 = new THREE.Mesh( geometry, material );
             scene.add( sphere6 );
-            Ellipselines.push(sphere6);
+            ProjectionPoint.push(sphere6);
             const DPointPos = new THREE.Vector3(start.x, start.y - obj.Height, start.z);
             sphere6.position.set(DPointPos.x, -obj.Height/2, DPointPos.z);
         }
-        
     }
 }
 
@@ -888,14 +893,67 @@ Generate(obj.Radius, obj.Height, obj.Segments);
 
 let GlobAng=obj.CameraAngle;
 
+let LetterFrecv = ['P','Q','O','H','E','D'];
+
+///ADAUGA TEXT
+function GenerateText(verf){
+    if(verf==1){
+        while (Letters.length > 0) {
+            const label = Letters.pop();
+            document.body.removeChild(label);
+        }
+        return 0;
+    }
+    while (Letters.length > 0) {
+        const label = Letters.pop();
+        document.body.removeChild(label);
+    }
+    for(let i=0;i<ProjectionPoint.length;i++){
+        label = document.createElement('div');
+        label.className = 'label';
+        label.innerHTML = LetterFrecv[i]
+        label.style.position = 'absolute';
+        label.style.color = 'white';
+        document.body.appendChild(label);
+
+        let screenPos = toScreenPosition(ProjectionPoint[i], camera);
+        Letters.push(label);
+        label.style.left = `${screenPos.x}px`;
+        label.style.top = `${screenPos.y}px`;
+    }
+}
+//TEXT TO SCREEN POSITION PENTRU LITERELE PUNCTELOR
+
+function toScreenPosition(obj, camera) {
+    const vector = new THREE.Vector3();
+    const widthHalf = 0.5 * renderer.domElement.width;
+    const heightHalf = 0.5 * renderer.domElement.height;
+
+    obj.updateMatrixWorld();
+    vector.setFromMatrixPosition(obj.matrixWorld);
+    vector.project(camera);
+
+    vector.x = (vector.x * widthHalf) + widthHalf;
+    vector.y = -(vector.y * heightHalf) + heightHalf;
+
+    return { x: vector.x, y: vector.y };
+}
+
 ///UPDATE EVERYTHING
 function animate() {
     renderer.render(scene, camera);
     controls.update();
-    GlobAng+=0.0025;
+
+    if(obj.NamePoints==true){
+        GenerateText(0);
+    }
+    else{
+        GenerateText(1);
+    }
+
     if(obj.CameraAnimate==true){
         const radius = Math.sqrt(obj.x ** 2 + obj.z ** 2);
-
+        GlobAng+=0.0025;
         const x = radius * Math.cos(GlobAng);
         const z = radius * Math.sin(GlobAng);
         camera.position.set(x, obj.y, z);
