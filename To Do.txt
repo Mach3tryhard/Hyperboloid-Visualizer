@@ -1,1 +1,2 @@
 Optimizari maybe
+small amounts of segments ruin the 2d projection on the ellipse

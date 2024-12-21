@@ -655,20 +655,19 @@ function Generate(radius, height, segments) {
             scene.add(Circle1mesh);
             scene.add(Circle2mesh);
         }
-
+        ///NEW STUFFF ------------------------------------------------------
         ///CERCUL DIN MIJLOC GENERARE
 
         const middleRadius = radius * Math.cos(obj.Phi / 2);
         const middleCircle = [];
-        const middlePhi = obj.Phi / 2; // Half of the top circle's rotation
+        const middlePhi = obj.Phi / 2;
 
         for (let i = 0; i < obj.Segments; i++) {
             const angle = (i / obj.Segments) * obj.Theta;
             const x = middleRadius * Math.cos(angle) * obj.Alpha;
             const z = middleRadius * Math.sin(angle) * obj.Beta;
-            const y = 0; // Assuming the middle circle lies in the XZ plane
+            const y = 0;
 
-            // Rotate the point around the Y-axis by middlePhi angle
             const rotatedX = x * Math.cos(middlePhi) - z * Math.sin(middlePhi);
             const rotatedZ = x * Math.sin(middlePhi) + z * Math.cos(middlePhi);
 
