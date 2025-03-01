@@ -6,8 +6,6 @@ Made using:
 * [![datgui][datgui.io]][datgui-url]
 * [![stats][stats.dev]][stats-url]
 
-https://docs.google.com/presentation/d/1qgbsjkaux2D_RmfnK4URr1jR9Hvy8mNV/edit#slide=id.p1
-
 
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
